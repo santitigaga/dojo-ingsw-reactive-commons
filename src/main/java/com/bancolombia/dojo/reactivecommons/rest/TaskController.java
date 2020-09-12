@@ -41,8 +41,6 @@ public class TaskController {
                 return reactiveCommandGateway
                         .getRemoteTasks(routingTable.get(name), constants.getNodeName())
                         .flatMapMany(taskList -> Flux.fromIterable(taskList.getTasks()));
-
-
             }
         }
     }
@@ -51,7 +49,7 @@ public class TaskController {
     @PutMapping(path = "/tasks/{name}", consumes = MediaType.APPLICATION_JSON_VALUE)
     public Mono<Void> saveTask(@PathVariable("name") String name, @RequestBody Task entTask) {
         if (constants.getNodeName().equals(name)) {
-            tasksRepository.save(entTask);
+            return tasksRepository.save(entTask);
         } else {
             if (!routingTable.contains(name)) {
                 Whois whois = new Whois(name, constants.getAppName());
@@ -62,10 +60,8 @@ public class TaskController {
                         );
             } else {
                 return reactiveCommandGateway.emitSaveTask(entTask, routingTable.get(name));
-
             }
         }
-        return Mono.empty();
     }
 
 

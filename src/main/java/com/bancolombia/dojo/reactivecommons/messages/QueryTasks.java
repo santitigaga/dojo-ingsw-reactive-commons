@@ -12,11 +12,4 @@ public class QueryTasks {
     private String personName;
     private String requester;
 
-    public void localData(){
-        //si no request reply
-    }
-
-    public void listenRemoteQuery(){
-
-    }
 }
