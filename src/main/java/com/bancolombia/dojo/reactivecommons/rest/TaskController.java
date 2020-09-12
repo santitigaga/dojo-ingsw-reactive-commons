@@ -20,8 +20,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class TaskController {
 
     private final ConcurrentHashMap<String, String> routingTable = new ConcurrentHashMap<>();
-    private final ReactiveEventGateway reactiveEventGateway;
-    private final ReactiveCommandGateway reactiveCommandGateway;
+    private final ReactiveEventGateway eventGateway;
+    private final ReactiveCommandGateway commandGateway;
     private final TasksRepository tasksRepository;
     private final Constants constants;
 
@@ -32,13 +32,13 @@ public class TaskController {
         } else {
             if (!routingTable.contains(name)) {
                 Whois whois = new Whois(name, constants.getAppName());
-                return reactiveEventGateway.emitWhoIs(whois)
-                        .then(reactiveEventGateway.register(name)
+                return eventGateway.emitWhoIs(whois)
+                        .then(eventGateway.register(name)
                                 .flatMap(this::saveRoute)
-                                .flatMap(saveWho -> reactiveCommandGateway.getRemoteTasks(saveWho.getAppName(), constants.getNodeName())))
+                                .flatMap(saveWho -> commandGateway.getRemoteTasks(saveWho.getAppName(), constants.getNodeName())))
                         .flatMapMany(taskList -> Flux.fromIterable(taskList.getTasks()));
             } else {
-                return reactiveCommandGateway
+                return commandGateway
                         .getRemoteTasks(routingTable.get(name), constants.getNodeName())
                         .flatMapMany(taskList -> Flux.fromIterable(taskList.getTasks()));
             }
@@ -53,13 +53,13 @@ public class TaskController {
         } else {
             if (!routingTable.contains(name)) {
                 Whois whois = new Whois(name, constants.getAppName());
-                return reactiveEventGateway.emitWhoIs(whois)
-                        .then(reactiveEventGateway.register(name)
+                return eventGateway.emitWhoIs(whois)
+                        .then(eventGateway.register(name)
                                 .flatMap(this::saveRoute)
-                                .flatMap(saveWho -> reactiveCommandGateway.emitSaveTask(entTask, saveWho.getAppName()))
+                                .flatMap(saveWho -> commandGateway.emitSaveTask(entTask, saveWho.getAppName()))
                         );
             } else {
-                return reactiveCommandGateway.emitSaveTask(entTask, routingTable.get(name));
+                return commandGateway.emitSaveTask(entTask, routingTable.get(name));
             }
         }
     }
