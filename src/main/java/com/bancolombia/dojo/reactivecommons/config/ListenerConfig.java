@@ -2,9 +2,7 @@ package com.bancolombia.dojo.reactivecommons.config;
 
 import com.bancolombia.dojo.reactivecommons.gateways.ReactiveCommandGateway;
 import com.bancolombia.dojo.reactivecommons.gateways.ReactiveEventGateway;
-import com.bancolombia.dojo.reactivecommons.messages.SaveTask;
-import com.bancolombia.dojo.reactivecommons.messages.SaveWho;
-import com.bancolombia.dojo.reactivecommons.messages.Whois;
+import com.bancolombia.dojo.reactivecommons.messages.*;
 import lombok.RequiredArgsConstructor;
 import org.reactivecommons.api.domain.Command;
 import org.reactivecommons.api.domain.DomainEvent;
@@ -29,14 +27,14 @@ public class ListenerConfig {
         return HandlerRegistry.register()
                 .listenEvent(Whois.NAME, this::processWhoIsEvents, Whois.class)
                 .handleCommand(SaveWho.NAME, this::processSaveWhoCommands, SaveWho.class)
-                .handleCommand(SaveTask.NAME, this::processSaveTaskCommands, SaveTask.class);
+                .handleCommand(SaveTask.NAME, this::processSaveTaskCommands, SaveTask.class)
+                .serveQuery(QueryTasks.NAME, this::processQueryTask, QueryTasks.class);
     }
 
     private Mono<Void> processWhoIsEvents(DomainEvent<Whois> message) {
         System.out.println("listen WhoIs events " + message.getData());
         if (message.getData().getWho().equals(constants.getNodeName())) {
             SaveWho saveWho = new SaveWho(constants.getNodeName(), constants.getAppName());
-            System.out.println("I'm sending to " + message.getData().getReplyTo());
             return commandGateway.emitSaveWho(saveWho, message.getData().getReplyTo());
         }
         return Mono.empty();
@@ -55,5 +53,9 @@ public class ListenerConfig {
         return Mono.empty();
     }
 
+    private Mono<TaskList> processQueryTask(QueryTasks message) {
+        System.out.println("listen QueryTasks " + message);
+        return tasksRepository.get();
+    }
 
 }

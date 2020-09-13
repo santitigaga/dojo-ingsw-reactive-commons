@@ -35,8 +35,8 @@ public class ReactiveCommandGateway {
     }
 
 
-    public Mono<TaskList> getRemoteTasks(String target, String nodeName) {
-        QueryTasks queryTasks = new QueryTasks(nodeName, constants.getNodeName());
+    public Mono<TaskList> getRemoteTasks(String target, String personName) {
+        QueryTasks queryTasks = new QueryTasks(personName, constants.getAppName());
         AsyncQuery<QueryTasks> asyncQuery = new AsyncQuery<>(QueryTasks.NAME, queryTasks);
         return asyncGateway.requestReply(asyncQuery, target, TaskList.class);
     }

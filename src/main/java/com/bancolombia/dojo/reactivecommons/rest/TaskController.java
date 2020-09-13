@@ -5,14 +5,15 @@ import com.bancolombia.dojo.reactivecommons.config.TasksRepository;
 import com.bancolombia.dojo.reactivecommons.gateways.ReactiveCommandGateway;
 import com.bancolombia.dojo.reactivecommons.gateways.ReactiveEventGateway;
 import com.bancolombia.dojo.reactivecommons.messages.SaveWho;
+import com.bancolombia.dojo.reactivecommons.messages.TaskList;
 import com.bancolombia.dojo.reactivecommons.messages.Whois;
 import com.bancolombia.dojo.reactivecommons.model.Task;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 @RestController
@@ -26,21 +27,23 @@ public class TaskController {
     private final Constants constants;
 
     @GetMapping(path = "/tasks/{name}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Flux<Task> listTasks(@PathVariable("name") String name) {
+    public Mono<List<Task>> listTasks(@PathVariable("name") String name) {
         if (constants.getNodeName().equals(name)) {
-            return tasksRepository.get();
+            return tasksRepository.get()
+                    .map(TaskList::getTasks);
         } else {
             if (!routingTable.contains(name)) {
                 Whois whois = new Whois(name, constants.getAppName());
                 return eventGateway.emitWhoIs(whois)
                         .then(eventGateway.register(name)
                                 .flatMap(this::saveRoute)
-                                .flatMap(saveWho -> commandGateway.getRemoteTasks(saveWho.getAppName(), constants.getNodeName())))
-                        .flatMapMany(taskList -> Flux.fromIterable(taskList.getTasks()));
+                                .flatMap(saveWho -> commandGateway.getRemoteTasks(saveWho.getAppName(), name))
+                        )
+                        .map(TaskList::getTasks);
             } else {
                 return commandGateway
-                        .getRemoteTasks(routingTable.get(name), constants.getNodeName())
-                        .flatMapMany(taskList -> Flux.fromIterable(taskList.getTasks()));
+                        .getRemoteTasks(routingTable.get(name), name)
+                        .map(TaskList::getTasks);
             }
         }
     }

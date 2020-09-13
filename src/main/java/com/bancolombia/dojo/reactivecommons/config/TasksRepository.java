@@ -1,9 +1,9 @@
 package com.bancolombia.dojo.reactivecommons.config;
 
+import com.bancolombia.dojo.reactivecommons.messages.TaskList;
 import com.bancolombia.dojo.reactivecommons.model.Task;
 import lombok.NoArgsConstructor;
 import org.springframework.stereotype.Component;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -18,7 +18,7 @@ public class TasksRepository  {
             return Mono.empty();
         }
 
-        public Flux<Task> get() {
-            return Flux.fromIterable(tasks);
+        public Mono<TaskList> get() {
+            return Mono.just(new TaskList(tasks));
         }
 }
